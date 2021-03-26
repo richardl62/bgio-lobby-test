@@ -1,30 +1,44 @@
 import React from 'react';
-import { CreateMatch, JoinGame } from './lobby';
-// import { SocketIO } from 'boardgame.io/multiplayer'
-// import { Client } from 'boardgame.io/react';
-// import game from './game';
-// import board from './board';
+import { CreateMatch, JoinGame, Player } from './lobby';
+import { SocketIO } from 'boardgame.io/multiplayer'
+import { Client } from 'boardgame.io/react';
+import game from './game';
+import board from './board';
+
+function playerParse(string: string | null) : Player | null {
+  if(string === null) {
+    return null;
+  }
+
+  const obj = JSON.parse(string);
+  if(obj instanceof Array && obj.length === 2) {
+    const [id, credentials] = obj;
+    return {id:id, credentials: credentials};
+  } 
+
+  throw new Error("Invalid player information in URL " + string);
+}
 
 const inputURL = new URL(window.location.href);
 const urlMatchID = inputURL.searchParams.get('match');
-const urlPlayerID = inputURL.searchParams.get('player');
+const urlPlayer = playerParse(inputURL.searchParams.get('player'));
 
 interface MakeLinkArgs {
   matchID?: string;
-  playerID?: string;
+  player?: Player;
 }
 
-export function makeLink({matchID, playerID}: MakeLinkArgs) {
+export function makeLink({matchID, player}: MakeLinkArgs) {
   let params = new URLSearchParams();
   const matchID_ = matchID || urlMatchID;
-  const playerID_ = playerID || urlPlayerID;
+  const player_ = player || urlPlayer;
 
   if(matchID_)  {
     params.set('match', matchID_);
   }
   
-  if(playerID_)  {
-    params.set('player', playerID_);
+  if(player_)  {
+    params.set('player', JSON.stringify([player_.id,player_.credentials]));
   }
 
   let newURL = new URL(inputURL.toString());
@@ -37,8 +51,8 @@ function setMatchID(matchID: string) {
   window.location.href = makeLink({matchID: matchID});
 }
 
-function setPlayerID(playerID: string) {
-  window.location.href = makeLink({playerID: playerID});
+function setPlayer(player: Player) {
+  window.location.href = makeLink({player: player});
 }
 
 function App() {
@@ -47,17 +61,21 @@ function App() {
     return <CreateMatch setMatchID={setMatchID} />;
   } 
   
-  if (urlPlayerID === null ) {
-    return <JoinGame setPlayerID={setPlayerID} />;
+  if (urlPlayer === null ) {
+    return <JoinGame matchID={urlMatchID} setPlayer={setPlayer} />;
   }
 
-  // const GameClient = Client({
-  //   game: game,
-  //   board: board,
-  //   multiplayer: SocketIO({ server: 'localhost:8000' }),
-  // });
+  const GameClient = Client({
+    game: game,
+    board: board,
+    multiplayer: SocketIO({ server: 'localhost:8000' }),
+  });
 
-  return (<div>{`Match: ${urlMatchID}  Player: ${urlPlayerID}`}</div>)
+  return (<div>
+      <div>{`Match: ${urlMatchID}  Player: ${urlPlayer.id} (${urlPlayer.credentials})`}</div>
+      <GameClient matchID={urlMatchID} playerID={urlPlayer.id} credentials={urlPlayer.credentials}/>
+    </div>
+    )
 }
 
 export default App;
