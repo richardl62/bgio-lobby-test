@@ -1,9 +1,10 @@
-import React from 'react';
+import { Client } from 'boardgame.io/react';
+import game from './game';
+import board from './board';
 
-function App() {
-  return (
-    <div>Hello. I'm an app</div>
-  );
-}
+const App = Client({ 
+  game: game,
+  board: board,
+});
 
 export default App;
