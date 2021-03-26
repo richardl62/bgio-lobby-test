@@ -11,9 +11,15 @@ const game = {
   // passed through the Game Creation API.
   setup: () : G=> {return {value: 0};},
 
+  turn: {
+    moveLimit: 1,
+  },
+
   moves: {
     // short-form move.
-    add: (G: G, ctx: any, value: number) => {G.value += value},
+    add: (G: G, ctx: any, value: number) => {
+        G.value += value;
+      },
   },
 }
 
